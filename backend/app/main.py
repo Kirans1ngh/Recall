@@ -15,10 +15,10 @@ from app.config import settings
 async def lifespan(app: FastAPI):
     """Startup and shutdown events"""
     # Startup
-    print("🚀 Starting Bookmark AI...")
+    print("[INFO] Starting Bookmark AI...")
     yield
     # Shutdown
-    print("👋 Shutting down...")
+    print("[INFO] Shutting down...")
 
 
 app = FastAPI(

@@ -35,8 +35,6 @@ expo-env.d.ts
 *.p12
 *.key
 *.mobileprovision
-/mobile/ios
-/mobile/android
 
 # Metro
 .metro-health-check*
@@ -61,3 +59,5 @@ pip-log.txt
 .DS_Store
 Thumbs.db
 *.pem
+
+mobile_rn/
