@@ -94,3 +94,4 @@ class _ScaleTapState extends State<ScaleTap> with SingleTickerProviderStateMixin
     );
   }
 }
+

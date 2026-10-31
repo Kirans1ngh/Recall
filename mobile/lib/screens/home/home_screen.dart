@@ -8,7 +8,6 @@ import '../../providers/bookmarks_provider.dart';
 import '../settings/server_settings_dialog.dart';
 import 'widgets/bookmark_card.dart';
 import 'widgets/bookmark_detail_sheet.dart';
-import 'widgets/cognitive_hero_card.dart';
 import 'widgets/platform_filter_row.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -139,14 +138,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Column(
         children: [
-          // Cognitive Health / Memory Retention Hero
-          CognitiveHeroCard(
-            totalCount: provider.totalBookmarksCount,
-            completedCount: provider.bookmarks.where((b) => b.isCompleted).length,
-            processingCount: provider.bookmarks.where((b) => b.isProcessing || b.isPending).length,
-            onTap: () => provider.fetchBookmarks(),
-          ),
-
           // Platform Filter Chips
           if (provider.availablePlatforms.isNotEmpty)
             Padding(

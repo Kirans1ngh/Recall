@@ -90,3 +90,4 @@ class _BreathingHaloState extends State<BreathingHalo> with SingleTickerProvider
     );
   }
 }
+
