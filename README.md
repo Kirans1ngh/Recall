@@ -14,6 +14,8 @@
 [![Dart](https://img.shields.io/badge/Dart-3.13+-0175C2?style=for-the-badge&logo=dart&logoColor=white)](https://dart.dev)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.109+-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org)
+[![Google Gemini](https://img.shields.io/badge/Google%20Gemini-1.5%20Flash-8E75B2?style=for-the-badge&logo=googlegemini&logoColor=white)](https://ai.google.dev)
+[![NVIDIA NIM](https://img.shields.io/badge/NVIDIA%20NIM-Llama%203.3-76B900?style=for-the-badge&logo=nvidia&logoColor=white)](https://build.nvidia.com)
 [![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4o--mini-412991?style=for-the-badge&logo=openai&logoColor=white)](https://openai.com)
 [![Pinecone](https://img.shields.io/badge/Vector%20DB-Pinecone-040E15?style=for-the-badge&logo=pinecone&logoColor=white)](https://www.pinecone.io)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
@@ -22,6 +24,7 @@
 
 [Features](#features) •
 [Architecture](#system-architecture) •
+[Multi-Provider AI](#multi-provider-ai-support) •
 [Quickstart](#getting-started) •
 [API Reference](#api-reference) •
 [Testing](#testing--quality-assurance) •
@@ -38,8 +41,8 @@ Users collect dozens of links, articles, YouTube videos, and social posts across
 Recall converts static URLs into an active, searchable knowledge base:
 1. **Ingestion:** Ingest web or video URLs across major content platforms.
 2. **Deep Extraction:** Extract full transcripts from YouTube videos or clean, readable article bodies from websites without advertising scripts or navigation boilerplate.
-3. **AI Distillation:** Automatically produce 2 to 3 sentence executive summaries, key takeaway bullet points, and categorized topic tags via OpenAI `gpt-4o-mini`.
-4. **Semantic Retrieval:** Generate vector embeddings (`text-embedding-3-small`) stored in a Pinecone vector index. Search using natural language queries (*"What was that video explaining transformer attention?"*) to obtain ranked bookmarks by relevance score alongside a synthesized answer compiled from saved materials.
+3. **AI Distillation:** Automatically produce 2 to 3 sentence executive summaries, key takeaway bullet points, and categorized topic tags via your chosen provider (**Google Gemini**, **NVIDIA NIM**, or **OpenAI**).
+4. **Semantic Retrieval:** Generate vector embeddings stored in a Pinecone vector index. Search using natural language queries (*"What was that video explaining transformer attention?"*) to obtain ranked bookmarks by relevance score alongside a synthesized answer compiled from saved materials.
 
 ---
 
@@ -47,10 +50,30 @@ Recall converts static URLs into an active, searchable knowledge base:
 
 * **Universal Ingestion** — Save content from YouTube, Twitter/X, Instagram, Spotify, GitHub, Reddit, Medium, Substack, and generic websites.
 * **YouTube Transcript Parsing** — Extracts captions, video metadata, and creator details via `youtube-transcript-api` without requiring YouTube Data API keys.
-* **AI Summarization & Tagging** — Distills long-form material into core takeaways, structured bullets, and queryable tags.
+* **Multi-Provider AI Architecture** — Native support for **Google Gemini**, **NVIDIA NIM**, and **OpenAI**. Decouple reasoning from embedding generation to avoid vendor lock-in.
+* **Resilient Output Parsing** — Robust JSON extractor handling direct JSON, markdown codeblocks (````json ... ````), and conversational wrappers across open-source and proprietary models.
 * **Semantic Search & Synthesis** — Natural language search queries return ranked bookmark cards accompanied by an LLM-synthesized answer.
-* **Flutter Cross-Platform Client** — OLED dark interface (`#0F0F14`), responsive layouts, modal detail sheets, clipboard paste integration, and background polling.
+* **Flutter Cross-Platform Client** — OLED dark interface (`#0F0F14`), responsive layouts, modal detail sheets, tactile physics, clipboard paste integration, and background polling.
 * **Dynamic Server Switcher** — Built-in server configuration dialog with a live ping diagnostic to switch between Localhost, Android Emulator (`10.0.2.2:8000`), or remote hosts with one click.
+
+---
+
+## Multi-Provider AI Support
+
+Recall eliminates model vendor lock-in by implementing OpenAI-compatible abstraction layers across three major AI providers:
+
+| Provider | Supported Models (Default) | Embedding Model | Vector Dimension | Base URL |
+|---|---|---|---|---|
+| **Google Gemini** | `gemini-1.5-flash`, `gemini-1.5-pro` | `text-embedding-004` | 768 | `https://generativelanguage.googleapis.com/v1beta/openai/` |
+| **NVIDIA NIM** | `meta/llama-3.3-70b-instruct`, `mistralai/mistral-large-2` | `nvidia/llama-3.2-nv-embedqa-1b-v2` | 2048 | `https://integrate.api.nvidia.com/v1` |
+| **OpenAI** | `gpt-4o-mini`, `gpt-4o` | `text-embedding-3-small` | 1536 | Default (`https://api.openai.com/v1`) |
+
+### Decoupled Reasoning and Embeddings
+
+Pinecone vector indexes have fixed vector dimensions defined at creation time. Recall decouples `LLM_PROVIDER` and `EMBEDDING_PROVIDER`:
+* You can run `gemini-1.5-flash` or NVIDIA Llama 3.3 for high-speed, cost-effective summarization while preserving your existing 1536-dimension OpenAI vector store.
+* Or run pure Gemini (768-dim Pinecone index) or pure NVIDIA NIM (2048-dim Pinecone index).
+* Set `LLM_PROVIDER=auto` and `EMBEDDING_PROVIDER=auto` for automatic credential-based detection.
 
 ---
 
@@ -79,11 +102,11 @@ flowchart TD
         BgWorker --> WebExt
     end
 
-    subgraph Intelligence ["AI & Vector Store"]
-        OpenAI["OpenAI (gpt-4o-mini & text-embedding-3-small)"]
+    subgraph Intelligence ["Multi-Provider AI & Vector Store"]
+        AIProc["AI Processor (OpenAI / Gemini / NVIDIA NIM)"]
         Pinecone["Pinecone Vector Database"]
-        BgWorker --> OpenAI
-        OpenAI --> Pinecone
+        BgWorker --> AIProc
+        AIProc --> Pinecone
     end
 
     ClientNet <==>|"REST API (JSON)"| API
@@ -99,7 +122,7 @@ flowchart TD
 | **Mobile / Frontend** | Flutter 3.47+, Dart 3.13+, Provider, Material 3 Dark Theme |
 | **Backend API** | FastAPI 0.109+, Uvicorn (ASGI), Pydantic v2, Pydantic-Settings |
 | **Content Scraping** | BeautifulSoup4, HTTPX (Async), YouTube Transcript API |
-| **AI & Embeddings** | OpenAI API (`gpt-4o-mini`, `text-embedding-3-small`) |
+| **AI Providers** | Google Gemini, NVIDIA NIM, OpenAI API |
 | **Vector Storage** | Pinecone Vector Database (Cosine Metric) |
 | **Networking** | RESTful HTTP/JSON with CORS and structured error handling |
 
@@ -112,18 +135,19 @@ Recall/
 |-- backend/                       # FastAPI Backend
 |   |-- app/
 |   |   |-- main.py                # Application entrypoint & CORS middleware
-|   |   |-- config.py              # Pydantic environment settings
+|   |   |-- config.py              # Pydantic v2 environment settings & multi-provider resolution
 |   |   |-- routes/
 |   |   |   |-- bookmarks.py       # CRUD operations & background worker triggers
 |   |   |   `-- search.py          # Semantic search & LLM answer synthesis
 |   |   `-- services/
 |   |       |-- processor.py       # Extraction & AI orchestration pipeline
 |   |       |-- url_detector.py    # URL platform detection & classification
-|   |       |-- ai_processor.py    # OpenAI summarization & embedding generation
+|   |       |-- ai_processor.py    # Multi-provider summarizer, embedding generator & robust JSON parser
 |   |       |-- vector_search.py   # Pinecone indexing and semantic search
 |   |       `-- extractors/
 |   |           |-- youtube.py     # YouTube transcript & metadata scraper
 |   |           `-- webpage.py     # Generic article & web content cleaner
+|   |-- tests/                     # Backend automated test suite (pytest)
 |   |-- requirements.txt           # Python dependencies
 |   |-- .env.example               # Environment variables template
 |   `-- venv/                      # Python virtual environment (gitignored)
@@ -135,11 +159,12 @@ Recall/
 |   |   |   |-- constants/         # API endpoints & OLED color palette
 |   |   |   |-- network/           # ApiClient & typed ApiException classes
 |   |   |   |-- services/          # SharedPreferences persistence
-|   |   |   `-- theme/             # Material 3 dark theme specifications
+|   |   |   |-- theme/             # Material 3 dark theme specifications
+|   |   |   `-- widgets/           # Tactile physics, glassmorphic containers & animations
 |   |   |-- models/                # Bookmark, SearchResult, SearchResponse models
 |   |   |-- providers/             # BookmarksProvider, SearchProvider, SettingsProvider
 |   |   `-- screens/
-|   |       |-- main_navigation_screen.dart # Persistent bottom tab navigation
+|   |       |-- main_navigation_screen.dart # Floating navigation bar
 |   |       |-- home/              # Bookmarks list, filter chips & modal details
 |   |       |-- search/            # Query bar, suggestions, AI answer card
 |   |       |-- add/               # URL validation & clipboard paste
@@ -159,9 +184,12 @@ Recall/
 
 * Python: 3.11 or higher
 * Flutter SDK: 3.24 or higher (Dart 3.5+)
-* API Keys:
+* Vector Database:
+  * [Pinecone API Key & Index](https://www.pinecone.io/) (Dimension matched to embedding provider, Metric: cosine)
+* AI Provider Key (At least one):
+  * [Google AI Studio API Key](https://aistudio.google.com/)
+  * [NVIDIA API Catalog Key](https://build.nvidia.com/)
   * [OpenAI API Key](https://platform.openai.com/api-keys)
-  * [Pinecone API Key & Index](https://www.pinecone.io/) (Dimension: 1536, Metric: cosine)
 
 ---
 
@@ -184,12 +212,27 @@ copy .env.example .env           # Windows
 # cp .env.example .env           # macOS / Linux
 ```
 
-Update `.env` with API credentials:
-```ini
-OPENAI_API_KEY=sk-your-openai-key
-OPENAI_MODEL=gpt-4o-mini
-EMBEDDING_MODEL=text-embedding-3-small
+Update `.env` with your desired provider credentials:
 
+```ini
+# Provider Selection (auto, openai, gemini, or nvidia_nim)
+LLM_PROVIDER=gemini
+EMBEDDING_PROVIDER=openai
+
+# Google Gemini (OpenAI-compatible)
+GEMINI_API_KEY=your-gemini-key
+GEMINI_MODEL=gemini-1.5-flash
+
+# NVIDIA NIM (OpenAI-compatible)
+NVIDIA_NIM_API_KEY=your-nvidia-key
+NVIDIA_NIM_MODEL=meta/llama-3.3-70b-instruct
+
+# OpenAI
+OPENAI_API_KEY=your-openai-key
+OPENAI_MODEL=gpt-4o-mini
+OPENAI_EMBEDDING_MODEL=text-embedding-3-small
+
+# Vector Database
 PINECONE_API_KEY=your-pinecone-key
 PINECONE_INDEX=bookmarks
 PINECONE_ENVIRONMENT=us-east-1
@@ -249,7 +292,7 @@ Interactive OpenAPI documentation is hosted at `http://127.0.0.1:8000/docs`.
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/health` | Health check endpoint returning server status. |
+| `GET` | `/health` | Health check endpoint returning server status and active AI providers. |
 | `POST` | `/api/bookmarks` | Ingest a new URL. Launches background extraction & AI tagging. |
 | `GET` | `/api/bookmarks` | List bookmarks with pagination and status/platform filters. |
 | `GET` | `/api/bookmarks/{id}` | Retrieve full details of a specific bookmark. |
@@ -313,11 +356,18 @@ GET /api/search?q=machine+learning+attention&limit=5
 
 ## Testing & Quality Assurance
 
-The codebase incorporates automated test verification and static analysis:
+The codebase incorporates automated test verification and static analysis across backend and mobile layers:
+
+### Backend Test Suite (Pytest)
+Execute backend unit tests covering provider auto-detection, client routing, mock LLM generation, and resilient JSON parsing:
+```powershell
+backend\venv\Scripts\python.exe -m pytest backend/tests -v
+```
 
 ### Flutter Automated Test Suite
 Execute the test runner and linter from the `mobile/` directory:
 ```powershell
+cd mobile
 flutter analyze
 flutter test
 ```
@@ -336,13 +386,14 @@ Test coverage includes:
 * [x] Monorepo architecture and FastAPI backend foundation
 * [x] YouTube transcript extraction via oEmbed and caption scraping
 * [x] Generic webpage article extraction with BeautifulSoup4
-* [x] OpenAI content summarization and Pinecone vector indexing
+* [x] Multi-provider AI summarization (Google Gemini, NVIDIA NIM, OpenAI)
+* [x] Resilient markdown fence and unstructured JSON parsing fallback
 * [x] Semantic search with natural language AI answer generation
 * [x] Flutter cross-platform mobile and web client implementation
 * [x] Dynamic server configuration and live health monitoring
 * [ ] **Database Persistence:** Migrate from in-memory dictionary to Supabase / PostgreSQL.
 * [ ] **Authentication & Multi-Tenancy:** Secure endpoints with Bearer JWTs and user-scoped Pinecone namespaces.
-* [ ] **Rate Limiting & Abuse Prevention:** Add `slowapi` rate-limiting to protect OpenAI token quotas.
+* [ ] **Rate Limiting & Abuse Prevention:** Add `slowapi` rate-limiting to protect API token quotas.
 * [ ] **SSRF Guard:** Validate target hostnames to prevent access to local loopbacks and cloud metadata endpoints.
 * [ ] **Native Mobile Share Intent:** Enable one-tap "Share to Recall" directly from external Android and iOS apps.
 

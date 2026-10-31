@@ -14,10 +14,8 @@ from app.config import settings
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup and shutdown events"""
-    # Startup
-    print("[INFO] Starting Bookmark AI...")
+    print(f"[INFO] Starting Bookmark AI (LLM: {settings.effective_llm_provider}, Embedding: {settings.effective_embedding_provider})...")
     yield
-    # Shutdown
     print("[INFO] Shutting down...")
 
 
@@ -44,9 +42,18 @@ app.include_router(search.router, prefix="/api/search", tags=["search"])
 
 @app.get("/")
 async def root():
-    return {"message": "Bookmark AI API", "status": "running"}
+    return {
+        "message": "Bookmark AI API",
+        "status": "running",
+        "llm_provider": settings.effective_llm_provider,
+        "embedding_provider": settings.effective_embedding_provider,
+    }
 
 
 @app.get("/health")
 async def health():
-    return {"status": "healthy"}
+    return {
+        "status": "healthy",
+        "llm_provider": settings.effective_llm_provider,
+        "embedding_provider": settings.effective_embedding_provider,
+    }
