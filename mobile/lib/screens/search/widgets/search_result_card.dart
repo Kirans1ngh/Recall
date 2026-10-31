@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/glass_container.dart';
+import '../../../core/widgets/scale_tap.dart';
 import '../../../models/search_result.dart';
 
 class SearchResultCard extends StatelessWidget {
@@ -22,16 +24,19 @@ class SearchResultCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: InkWell(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: ScaleTap(
         onTap: () => _openUrl(context),
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
+        scaleDown: 0.98,
+        child: GlassContainer(
+          borderRadius: 20,
+          borderWidth: 1.0,
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header: Title + Relevance Score
+              // Header: Title + Match Score
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -44,7 +49,8 @@ class SearchResultCard extends StatelessWidget {
                         color: AppColors.text,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        height: 1.3,
+                        height: 1.35,
+                        letterSpacing: -0.3,
                       ),
                     ),
                   ),
@@ -52,10 +58,10 @@ class SearchResultCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.success.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(8),
+                      color: AppColors.success.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                        color: AppColors.success.withValues(alpha: 0.4),
+                        color: AppColors.success.withValues(alpha: 0.45),
                         width: 1,
                       ),
                     ),
@@ -65,6 +71,7 @@ class SearchResultCard extends StatelessWidget {
                         color: AppColors.success,
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
+                        letterSpacing: 0.1,
                       ),
                     ),
                   ),
@@ -81,13 +88,14 @@ class SearchResultCard extends StatelessWidget {
                   style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 13,
-                    height: 1.4,
+                    height: 1.45,
+                    letterSpacing: -0.1,
                   ),
                 ),
                 const SizedBox(height: 10),
               ],
 
-              // URL link preview
+              // URL link snippet
               Row(
                 children: [
                   const Icon(Icons.link, size: 14, color: AppColors.textMuted),
@@ -103,7 +111,8 @@ class SearchResultCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const Icon(Icons.open_in_new, size: 14, color: AppColors.textMuted),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.open_in_new, size: 13, color: AppColors.textMuted),
                 ],
               ),
             ],
@@ -113,4 +122,3 @@ class SearchResultCard extends StatelessWidget {
     );
   }
 }
-

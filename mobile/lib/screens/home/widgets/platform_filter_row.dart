@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/scale_tap.dart';
 
 class PlatformFilterRow extends StatelessWidget {
   final List<String> platforms;
@@ -22,7 +23,7 @@ class PlatformFilterRow extends StatelessWidget {
     final allFilters = ['all', ...platforms];
 
     return SizedBox(
-      height: 44,
+      height: 40,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -34,26 +35,37 @@ class PlatformFilterRow extends StatelessWidget {
           final isSelected = isAll ? selectedPlatform == null : selectedPlatform == platform;
           final color = isAll ? AppColors.primary : AppColors.getPlatformColor(platform);
 
-          return ChoiceChip(
-            label: Text(
-              isAll ? 'All' : platform[0].toUpperCase() + platform.substring(1),
-              style: TextStyle(
-                color: isSelected ? Colors.white : AppColors.textSecondary,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                fontSize: 13,
-              ),
-            ),
-            selected: isSelected,
-            onSelected: (_) {
+          return ScaleTap(
+            scaleDown: 0.94,
+            onTap: () {
               onPlatformSelected(isAll ? null : platform);
             },
-            selectedColor: color.withValues(alpha: 0.35),
-            backgroundColor: AppColors.surface,
-            side: BorderSide(
-              color: isSelected ? color : AppColors.surfaceLight,
-              width: 1,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOutCubic,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? color.withValues(alpha: 0.22)
+                    : AppColors.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isSelected ? color.withValues(alpha: 0.7) : AppColors.border,
+                  width: 1,
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  isAll ? 'All' : platform[0].toUpperCase() + platform.substring(1),
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : AppColors.textSecondary,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                    fontSize: 12,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+              ),
             ),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           );
         },
       ),

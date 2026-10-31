@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/widgets/glass_container.dart';
+import '../../core/widgets/scale_tap.dart';
 import '../../providers/bookmarks_provider.dart';
 
 class AddBookmarkScreen extends StatefulWidget {
@@ -59,13 +61,13 @@ class _AddBookmarkScreenState extends State<AddBookmarkScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Bookmark saved! Content is being analyzed in the background.'),
+            content: Text('Bookmark ingested. Neural extraction started in background.'),
             backgroundColor: AppColors.success,
           ),
         );
       }
 
-      await Future.delayed(const Duration(seconds: 1));
+      await Future.delayed(const Duration(milliseconds: 900));
       if (mounted) {
         setState(() {
           _isSuccess = false;
@@ -76,7 +78,7 @@ class _AddBookmarkScreenState extends State<AddBookmarkScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to save bookmark: $e'),
+            content: Text('Failed to ingest bookmark: $e'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -94,12 +96,12 @@ class _AddBookmarkScreenState extends State<AddBookmarkScreen> {
         title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Add Bookmark'),
+            Text('Ingest Content'),
             Text(
-              'Paste a URL to save and analyze',
+              'Input any web, video, or social link for automated synthesis',
               style: TextStyle(
                 color: AppColors.textSecondary,
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: FontWeight.normal,
               ),
             ),
@@ -107,7 +109,7 @@ class _AddBookmarkScreenState extends State<AddBookmarkScreen> {
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 100), // Extra bottom padding for floating nav
         child: Form(
           key: _formKey,
           child: Column(
@@ -115,11 +117,12 @@ class _AddBookmarkScreenState extends State<AddBookmarkScreen> {
             children: [
               // URL input field
               const Text(
-                'URL',
+                'Source URL',
                 style: TextStyle(
                   color: AppColors.textSecondary,
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: FontWeight.w600,
+                  letterSpacing: 0.3,
                 ),
               ),
               const SizedBox(height: 8),
@@ -130,7 +133,7 @@ class _AddBookmarkScreenState extends State<AddBookmarkScreen> {
                 style: const TextStyle(color: AppColors.text, fontSize: 14),
                 decoration: InputDecoration(
                   hintText: 'https://youtube.com/watch?v=... or article link',
-                  prefixIcon: const Icon(Icons.link, color: AppColors.primaryLight, size: 20),
+                  prefixIcon: const Icon(Icons.link, color: AppColors.cyanLight, size: 20),
                   suffixIcon: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -142,10 +145,19 @@ class _AddBookmarkScreenState extends State<AddBookmarkScreen> {
                             setState(() {});
                           },
                         ),
-                      IconButton(
-                        icon: const Icon(Icons.content_paste, size: 18, color: AppColors.primaryLight),
-                        tooltip: 'Paste from clipboard',
-                        onPressed: _pasteFromClipboard,
+                      ScaleTap(
+                        onTap: _pasteFromClipboard,
+                        scaleDown: 0.90,
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          margin: const EdgeInsets.only(right: 8),
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceLight,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: const Icon(Icons.content_paste, size: 16, color: AppColors.cyanLight),
+                        ),
                       ),
                     ],
                   ),
@@ -164,13 +176,14 @@ class _AddBookmarkScreenState extends State<AddBookmarkScreen> {
               ),
               const SizedBox(height: 20),
 
-              // Notes input field
+              // Personal Context
               const Text(
-                'Personal Notes (optional)',
+                'Context & Retrieval Notes (optional)',
                 style: TextStyle(
                   color: AppColors.textSecondary,
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: FontWeight.w600,
+                  letterSpacing: 0.3,
                 ),
               ),
               const SizedBox(height: 8),
@@ -179,74 +192,106 @@ class _AddBookmarkScreenState extends State<AddBookmarkScreen> {
                 maxLines: 3,
                 style: const TextStyle(color: AppColors.text, fontSize: 14),
                 decoration: const InputDecoration(
-                  hintText: 'Why are you saving this? Any specific takeaway or context...',
+                  hintText: 'Why are you saving this? Key thoughts or future recall triggers...',
                 ),
               ),
               const SizedBox(height: 28),
 
-              // Save button
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _isSuccess ? AppColors.success : AppColors.primary,
+              // Save button with spring animation
+              ScaleTap(
+                scaleDown: 0.96,
+                onTap: isSubmitting ? null : _submit,
+                child: Container(
+                  width: double.infinity,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    gradient: _isSuccess
+                        ? const LinearGradient(colors: [AppColors.success, Color(0xFF059669)])
+                        : AppColors.aiSynthesisGradient,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: (_isSuccess ? AppColors.success : AppColors.primary).withValues(alpha: 0.35),
+                        blurRadius: 18,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
                   ),
-                  onPressed: isSubmitting ? null : _submit,
-                  child: isSubmitting
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
-                        )
-                      : _isSuccess
-                          ? const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
-                                SizedBox(width: 8),
-                                Text('Saved! Analyzing...'),
-                              ],
-                            )
-                          : const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.bookmark_add, color: Colors.white, size: 20),
-                                SizedBox(width: 8),
-                                Text('Save & Process Bookmark'),
-                              ],
-                            ),
+                  child: Center(
+                    child: isSubmitting
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                          )
+                        : _isSuccess
+                            ? const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Ingested Successfully',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: -0.2,
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.bolt, color: Colors.white, size: 20),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Ingest & Synthesize',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: -0.2,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                  ),
                 ),
               ),
               const SizedBox(height: 28),
 
-              // Share Intent Info Card
-              Container(
+              // Cognitive Tip Card
+              GlassContainer(
+                borderRadius: 16,
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.surfaceLight),
-                ),
-                child: const Row(
+                child: Row(
                   children: [
-                    Text('💡', style: TextStyle(fontSize: 24)),
-                    SizedBox(width: 12),
-                    Expanded(
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.cyan.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.lightbulb_outline, size: 20, color: AppColors.cyanLight),
+                    ),
+                    const SizedBox(width: 14),
+                    const Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Quick Tip',
+                            'Seamless Share Target',
                             style: TextStyle(
                               color: AppColors.text,
-                              fontSize: 14,
+                              fontSize: 13,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          SizedBox(height: 4),
+                          SizedBox(height: 3),
                           Text(
-                            'You can also share links directly from YouTube, Twitter, or Safari/Chrome via the system share sheet.',
+                            'You can also share links directly from YouTube, Twitter/X, or browsers using the device share sheet.',
                             style: TextStyle(color: AppColors.textSecondary, fontSize: 12, height: 1.4),
                           ),
                         ],
@@ -259,12 +304,12 @@ class _AddBookmarkScreenState extends State<AddBookmarkScreen> {
 
               // Supported Platforms List
               const Text(
-                'Supported Platforms',
+                'Supported Integrations',
                 style: TextStyle(
                   color: AppColors.textMuted,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  letterSpacing: 0.5,
+                  letterSpacing: 0.4,
                 ),
               ),
               const SizedBox(height: 10),
@@ -272,13 +317,13 @@ class _AddBookmarkScreenState extends State<AddBookmarkScreen> {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  _buildPlatformChip('📺 YouTube', AppColors.youtube),
-                  _buildPlatformChip('🐦 Twitter / X', AppColors.twitter),
-                  _buildPlatformChip('📷 Instagram', AppColors.instagram),
-                  _buildPlatformChip('🎵 Spotify', AppColors.spotify),
-                  _buildPlatformChip('🔴 Reddit', AppColors.reddit),
-                  _buildPlatformChip('💻 GitHub', AppColors.github),
-                  _buildPlatformChip('🌐 Websites & Blogs', AppColors.webpage),
+                  _buildPlatformChip('YouTube', AppColors.youtube),
+                  _buildPlatformChip('Twitter / X', AppColors.twitter),
+                  _buildPlatformChip('Instagram', AppColors.instagram),
+                  _buildPlatformChip('Spotify', AppColors.spotify),
+                  _buildPlatformChip('Reddit', AppColors.reddit),
+                  _buildPlatformChip('GitHub', AppColors.github),
+                  _buildPlatformChip('Websites & Blogs', AppColors.webpage),
                 ],
               ),
             ],
@@ -293,18 +338,17 @@ class _AddBookmarkScreenState extends State<AddBookmarkScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.surfaceLight),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.border),
       ),
       child: Text(
         label,
         style: TextStyle(
           color: color,
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: FontWeight.w500,
         ),
       ),
     );
   }
 }
-

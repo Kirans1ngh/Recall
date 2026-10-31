@@ -43,15 +43,15 @@ void main() {
     expect(find.text('Add'), findsOneWidget);
 
     // Verify empty state text on home screen
-    expect(find.text('No bookmarks found'), findsOneWidget);
+    expect(find.text('No bookmarks stored'), findsOneWidget);
 
     // Tap Search Tab
     await tester.tap(find.text('Search'));
     await tester.pumpAndSettle();
 
     // Verify Search Screen elements
-    expect(find.text('Semantic Search'), findsOneWidget);
-    expect(find.text('Try asking:'), findsOneWidget);
+    expect(find.text('Semantic Recall'), findsOneWidget);
+    expect(find.text('Explore Memory Graph'), findsOneWidget);
     expect(find.text('What was that video about AI tools?'), findsWidgets);
 
     // Tap Add Tab
@@ -59,12 +59,12 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify Add Bookmark Screen elements
-    expect(find.text('Add Bookmark'), findsOneWidget);
-    expect(find.text('Paste a URL to save and analyze'), findsOneWidget);
-    expect(find.text('Save & Process Bookmark'), findsOneWidget);
+    expect(find.text('Ingest Content'), findsOneWidget);
+    expect(find.text('Input any web, video, or social link for automated synthesis'), findsOneWidget);
+    expect(find.text('Ingest & Synthesize'), findsOneWidget);
 
     // Test form validation on empty submit
-    await tester.tap(find.text('Save & Process Bookmark'));
+    await tester.tap(find.text('Ingest & Synthesize'));
     await tester.pumpAndSettle();
     expect(find.text('Please enter a URL'), findsOneWidget);
   });

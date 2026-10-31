@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/widgets/scale_tap.dart';
+import '../../core/widgets/staggered_entrance.dart';
 import '../../models/bookmark.dart';
 import '../../providers/bookmarks_provider.dart';
 import '../settings/server_settings_dialog.dart';
 import 'widgets/bookmark_card.dart';
 import 'widgets/bookmark_detail_sheet.dart';
+import 'widgets/cognitive_hero_card.dart';
 import 'widgets/platform_filter_row.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -44,8 +47,8 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context) {
         return AlertDialog(
           backgroundColor: AppColors.surface,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Delete Bookmark', style: TextStyle(color: AppColors.text, fontSize: 18)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('Delete Bookmark', style: TextStyle(color: AppColors.text, fontSize: 18, fontWeight: FontWeight.bold)),
           content: Text(
             'Are you sure you want to delete "${bookmark.displayTitle}"?',
             style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
@@ -91,36 +94,59 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             const Text('Bookmarks'),
             Text(
-              '${provider.totalBookmarksCount} saved',
+              '${provider.totalBookmarksCount} saved memory items',
               style: const TextStyle(
                 color: AppColors.textSecondary,
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: FontWeight.normal,
               ),
             ),
           ],
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.tune_outlined, color: AppColors.textSecondary),
-            tooltip: 'Server Settings',
-            onPressed: () {
+          ScaleTap(
+            onTap: () {
               showDialog(
                 context: context,
                 builder: (_) => const ServerSettingsDialog(),
               );
             },
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              margin: const EdgeInsets.only(right: 6),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceLight,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: const Icon(Icons.tune_outlined, size: 18, color: AppColors.cyanLight),
+            ),
           ),
-          IconButton(
-            icon: const Icon(Icons.refresh, color: AppColors.textSecondary),
-            tooltip: 'Refresh',
-            onPressed: () => provider.fetchBookmarks(),
+          ScaleTap(
+            onTap: () => provider.fetchBookmarks(),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              margin: const EdgeInsets.only(right: 16),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceLight,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: const Icon(Icons.refresh, size: 18, color: AppColors.textSecondary),
+            ),
           ),
-          const SizedBox(width: 8),
         ],
       ),
       body: Column(
         children: [
+          // Cognitive Health / Memory Retention Hero
+          CognitiveHeroCard(
+            totalCount: provider.totalBookmarksCount,
+            completedCount: provider.bookmarks.where((b) => b.isCompleted).length,
+            processingCount: provider.bookmarks.where((b) => b.isProcessing || b.isPending).length,
+            onTap: () => provider.fetchBookmarks(),
+          ),
+
           // Platform Filter Chips
           if (provider.availablePlatforms.isNotEmpty)
             Padding(
@@ -137,7 +163,7 @@ class _HomeScreenState extends State<HomeScreen> {
           // Main Content
           Expanded(
             child: RefreshIndicator(
-              color: AppColors.primary,
+              color: AppColors.cyan,
               backgroundColor: AppColors.surface,
               onRefresh: () => provider.fetchBookmarks(),
               child: _buildBody(provider),
@@ -154,11 +180,11 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(color: AppColors.primary),
+            CircularProgressIndicator(strokeWidth: 2.5, color: AppColors.cyan),
             SizedBox(height: 16),
             Text(
-              'Loading bookmarks...',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+              'Retrieving memory graph...',
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
             ),
           ],
         ),
@@ -200,27 +226,39 @@ class _HomeScreenState extends State<HomeScreen> {
             physics: const AlwaysScrollableScrollPhysics(),
             child: ConstrainedBox(
               constraints: BoxConstraints(minHeight: constraints.maxHeight),
-              child: const Center(
+              child: Center(
                 child: Padding(
-                  padding: EdgeInsets.all(32),
+                  padding: const EdgeInsets.all(32),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text('📎', style: TextStyle(fontSize: 56)),
-                      SizedBox(height: 16),
-                      Text(
-                        'No bookmarks found',
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceLight,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: const Icon(
+                          Icons.bookmark_border,
+                          size: 38,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      const Text(
+                        'No bookmarks stored',
                         style: TextStyle(
                           color: AppColors.text,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(height: 8),
-                      Text(
-                        'Save your first link or adjust your active platform filters',
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Drop a link from any app or adjust platform filters',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+                        style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
                       ),
                     ],
                   ),
@@ -234,14 +272,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return ListView.builder(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.only(bottom: 24),
+      padding: const EdgeInsets.only(top: 4, bottom: 96), // Extra bottom padding for floating nav
       itemCount: displayList.length,
       itemBuilder: (context, index) {
         final item = displayList[index];
-        return BookmarkCard(
-          bookmark: item,
-          onTap: () => _showDetailSheet(item),
-          onDelete: () => _confirmDelete(item),
+        return StaggeredEntrance(
+          index: index,
+          child: BookmarkCard(
+            bookmark: item,
+            onTap: () => _showDetailSheet(item),
+            onDelete: () => _confirmDelete(item),
+          ),
         );
       },
     );
